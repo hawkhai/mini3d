@@ -1,8 +1,8 @@
 #include "mini3d.h"
 
 // 初始化窗口并设置标题
-int Screen::screen_init(int w, int h, const TCHAR *title) {
-    WNDCLASS wc = { CS_BYTEALIGNCLIENT, (WNDPROC)screen_events, 0, 0, 0,
+int Window::screen_init(int w, int h, const TCHAR *title, WNDPROC wndproc) {
+    WNDCLASS wc = { CS_BYTEALIGNCLIENT, wndproc, 0, 0, 0,
         NULL, NULL, NULL, NULL, _T("SCREEN3.1415926") };
     BITMAPINFO bi = { { sizeof(BITMAPINFOHEADER), w, -h, 1, 32, BI_RGB,
         w * h * 4, 0, 0, 0, 0 } };
@@ -23,7 +23,6 @@ int Screen::screen_init(int w, int h, const TCHAR *title) {
         0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
     if (screen_handle == NULL) return -2;
 
-    screen_exit = 0;
     hDC = GetDC(screen_handle);
     screen_dc = CreateCompatibleDC(hDC);
     ReleaseDC(screen_handle, hDC);
@@ -47,15 +46,11 @@ int Screen::screen_init(int w, int h, const TCHAR *title) {
     SetForegroundWindow(screen_handle);
 
     ShowWindow(screen_handle, SW_NORMAL);
-    screen_dispatch();
-
-    memset(screen_keys, 0, sizeof(int) * 512);
     memset(screen_fb, 0, w * h * 4);
-
     return 0;
 }
 
-int Screen::screen_close(void) {
+int Window::screen_close(void) {
     if (screen_dc) {
         if (screen_ob) {
             SelectObject(screen_dc, screen_ob);
@@ -75,29 +70,8 @@ int Screen::screen_close(void) {
     return 0;
 }
 
-LRESULT Screen::screen_events(HWND hWnd, UINT msg,
-    WPARAM wParam, LPARAM lParam) {
-    switch (msg) {
-    case WM_CLOSE: screen_exit = 1; break;
-    case WM_KEYDOWN: screen_keys[wParam & 511] = 1; break;
-    case WM_KEYUP: screen_keys[wParam & 511] = 0; break;
-    default: return DefWindowProc(hWnd, msg, wParam, lParam);
-    }
-    return 0;
-}
-
-void Screen::screen_dispatch(void) {
-    MSG msg;
-    while (1) {
-        if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) break;
-        if (!GetMessage(&msg, NULL, 0, 0)) break;
-        DispatchMessage(&msg);
-    }
-}
-
-void Screen::screen_update(void) {
+void Window::screen_update(void) {
     HDC hDC = GetDC(screen_handle);
     BitBlt(hDC, 0, 0, screen_w, screen_h, screen_dc, 0, 0, SRCCOPY);
     ReleaseDC(screen_handle, hDC);
-    screen_dispatch();
 }

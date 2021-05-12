@@ -109,8 +109,14 @@ void trapezoid_edge_interp(trapezoid_t *trap, float y);
 void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y);
 
 
+#define RENDER_STATE_WIREFRAME      1		// 渲染线框
+#define RENDER_STATE_TEXTURE        2		// 渲染纹理
+#define RENDER_STATE_COLOR          4		// 渲染颜色
+
+#define DEVICE_KEYS_SIZE            512
+
 // 渲染设备
-typedef struct {
+struct Device {
     transform_t transform;      // 坐标变换器
     int width;                  // 窗口宽度
     int height;                 // 窗口高度
@@ -124,43 +130,59 @@ typedef struct {
     int render_state;           // 渲染状态
     UINT32 background;          // 背景颜色
     UINT32 foreground;          // 线框颜色
-} device_t;
 
-#define RENDER_STATE_WIREFRAME      1		// 渲染线框
-#define RENDER_STATE_TEXTURE        2		// 渲染纹理
-#define RENDER_STATE_COLOR          4		// 渲染颜色
+    static int device_exit;
+    static int device_keys[DEVICE_KEYS_SIZE];	// 当前键盘按下状态
 
+public:
+    Device() {
+        device_exit = 0;
+        memset(device_keys, 0, sizeof(int) * DEVICE_KEYS_SIZE);
+    }
 
-// 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
-void device_init(device_t *device, int width, int height, void *fb);
-// 删除设备
-void device_destroy(device_t *device);
-// 设置当前纹理
-void device_set_texture(device_t *device, void *bits, long pitch, int w, int h);
-// 清空 framebuffer 和 zbuffer
-void device_clear(device_t *device, int mode);
-// 画点
-void device_pixel(device_t *device, int x, int y, UINT32 color);
-// 绘制线段
-void device_draw_line(device_t *device, int x1, int y1, int x2, int y2, UINT32 c);
-// 根据坐标读取纹理
-UINT32 device_texture_read(const device_t *device, float u, float v);
+    // win32 event handler
+    static LRESULT win_events(HWND, UINT, WPARAM, LPARAM);
+    void win_dispatch(void);							// 处理消息
 
-// 渲染实现
-// 绘制扫描线
-void device_draw_scanline(device_t *device, scanline_t *scanline);
-// 主渲染函数
-void device_render_trap(device_t *device, trapezoid_t *trap);
-// 根据 render_state 绘制原始三角形
-void device_draw_primitive(device_t *device, const vertex_t *v1,
-    const vertex_t *v2, const vertex_t *v3);
+public:
+    void draw_plane(int a, int b, int c, int d);
+    void draw_box(float theta);
+    void camera_at_zero(float x, float y, float z);
+    void init_texture();
+
+    // 设备初始化，fb 为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4 字节对齐）
+    void device_init(int width, int height, void *fb);
+    // 删除设备
+    void device_destroy(Device *device);
+    // 设置当前纹理
+    void device_set_texture(void *bits, long pitch, int w, int h);
+    // 清空 framebuffer 和 zbuffer
+    void device_clear(int mode);
+    // 画点
+    void device_pixel(int x, int y, UINT32 color);
+    // 绘制线段
+    void device_draw_line(int x1, int y1, int x2, int y2, UINT32 c);
+    // 根据坐标读取纹理
+    UINT32 Device_texture_read(float u, float v);
+
+    // 渲染实现
+    // 绘制扫描线
+    void device_draw_scanline(scanline_t *scanline);
+    // 主渲染函数
+    void device_render_trap(trapezoid_t *trap);
+    // 根据 render_state 绘制原始三角形
+    void device_draw_primitive(const vertex_t *v1,
+        const vertex_t *v2, const vertex_t *v3);
+
+};
+
 
 //#ifdef __cplusplus
 //}
 //#endif
 
 // Win32 窗口及图形绘制：为 device 提供一个 DibSection 的 FB
-struct Screen {
+struct Window {
     int screen_w, screen_h;
     int screen_mx, screen_my, screen_mb;
     HWND screen_handle;		// 主窗口 HWND
@@ -170,11 +192,7 @@ struct Screen {
     unsigned char *screen_fb;	// frame buffer
     long screen_pitch;
 
-    static int screen_exit;
-    static int screen_keys[512];	// 当前键盘按下状态
-
-    Screen() {
-        screen_exit = 0;
+    Window() {
         screen_mx = 0, screen_my = 0, screen_mb = 0;
         screen_handle = NULL;
         screen_dc = NULL;
@@ -184,11 +202,7 @@ struct Screen {
         screen_pitch = 0;
     }
 
-    int screen_init(int w, int h, const TCHAR *title);	// 屏幕初始化
+    int screen_init(int w, int h, const TCHAR *title, WNDPROC wndproc);	// 屏幕初始化
     int screen_close(void);								// 关闭屏幕
-    void screen_dispatch(void);							// 处理消息
     void screen_update(void);							// 显示 FrameBuffer
-
-    // win32 event handler
-    static LRESULT screen_events(HWND, UINT, WPARAM, LPARAM);
 };
