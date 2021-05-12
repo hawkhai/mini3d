@@ -2,7 +2,6 @@
 
 // 设备初始化，fb为外部帧缓存，非 NULL 将引用外部帧缓存（每行 4字节对齐）
 void Device::device_init(int width, int height, void *fb) {
-    Device* device = this;
     int need = sizeof(void*) * (height * 2 + 1024) + width * height * 8;
     char *ptr = (char*)malloc(need + 64);
     char *framebuf, *zbuf;
@@ -47,7 +46,6 @@ void Device::device_destroy(Device *device) {
 
 // 设置当前纹理
 void Device::device_set_texture(void *bits, long pitch, int w, int h) {
-    Device* device = this;
     char *ptr = (char*)bits;
     int j;
     assert(w <= 1024 && h <= 1024);
@@ -61,7 +59,6 @@ void Device::device_set_texture(void *bits, long pitch, int w, int h) {
 
 // 清空 framebuffer 和 zbuffer
 void Device::device_clear(int mode) {
-    Device* device = this;
     int y, x, height = this->height;
     for (y = 0; y < this->height; y++) {
         UINT32 *dst = this->framebuffer[y];
@@ -78,7 +75,6 @@ void Device::device_clear(int mode) {
 
 // 画点
 void Device::device_pixel(int x, int y, UINT32 color) {
-
     if (((UINT32)x) < (UINT32)this->width && ((UINT32)y) < (UINT32)this->height) {
         this->framebuffer[y][x] = color;
     }
@@ -86,7 +82,6 @@ void Device::device_pixel(int x, int y, UINT32 color) {
 
 // 绘制线段
 void Device::device_draw_line(int x1, int y1, int x2, int y2, UINT32 c) {
-    Device* device = this;
     int x, y, rem = 0;
     if (x1 == x2 && y1 == y2) {
         device_pixel(x1, y1, c);
@@ -208,8 +203,7 @@ void Device::device_render_trap(trapezoid_t *trap) {
 }
 
 // 根据 render_state 绘制原始三角形
-void Device::device_draw_primitive(const vertex_t *v1,
-    const vertex_t *v2, const vertex_t *v3) {
+void Device::device_draw_primitive(const vertex_t *v1, const vertex_t *v2, const vertex_t *v3) {
 
     point_t p1, p2, p3, c1, c2, c3;
     int render_state = this->render_state;
@@ -280,7 +274,6 @@ void Device::draw_plane(int a, int b, int c, int d) {
 }
 
 void Device::draw_box(float theta) {
-    Device* device = this;
     matrix_t m;
     matrix_set_rotate(&m, -1, -0.5, 1, theta);
     this->transform.world = m;

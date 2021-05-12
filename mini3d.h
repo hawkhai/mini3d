@@ -6,20 +6,14 @@
 #include <windows.h>
 #include <tchar.h>
 
-//typedef unsigned int UINT32;
-
-typedef struct { float m[4][4]; } matrix_t;
-typedef struct { float x, y, z, w; } vector_t;
+typedef struct Matrix { float m[4][4]; } matrix_t;
+typedef struct Vector { float x, y, z, w; } vector_t;
 typedef vector_t point_t;
 
 inline int clamp(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
 
 // 计算插值：t 为 [0, 1] 之间的数值
 inline float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
 
 // | v |
 float vector_length(const vector_t *v);
@@ -65,7 +59,7 @@ void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, flo
 
 
 // 坐标变换
-typedef struct {
+typedef struct Transform {
     matrix_t world;         // 世界坐标变换
     matrix_t view;          // 摄影机坐标变换
     matrix_t projection;    // 投影变换
@@ -86,13 +80,13 @@ void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x)
 
 
 // 几何计算：顶点、扫描线、边缘、矩形、步长计算
-typedef struct { float r, g, b; } color_t;
-typedef struct { float u, v; } texcoord_t;
-typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
+typedef struct Color { float r, g, b; } color_t;
+typedef struct TexCoord { float u, v; } texcoord_t;
+typedef struct Vertex { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
 
-typedef struct { vertex_t v, v1, v2; } edge_t;
-typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
-typedef struct { vertex_t v, step; int x, y, w; } scanline_t;
+typedef struct Edge { vertex_t v, v1, v2; } edge_t;
+typedef struct Trapezoid { float top, bottom; edge_t left, right; } trapezoid_t;
+typedef struct Scanline { vertex_t v, step; int x, y, w; } scanline_t;
 
 
 void vertex_rhw_init(vertex_t *v);
@@ -101,8 +95,7 @@ void vertex_division(vertex_t *y, const vertex_t *x1, const vertex_t *x2, float 
 void vertex_add(vertex_t *y, const vertex_t *x);
 
 // 根据三角形生成 0-2 个梯形，并且返回合法梯形的数量
-int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
-    const vertex_t *p2, const vertex_t *p3);
+int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1, const vertex_t *p2, const vertex_t *p3);
 // 按照 Y 坐标计算出左右两条边纵坐标等于 Y 的顶点
 void trapezoid_edge_interp(trapezoid_t *trap, float y);
 // 根据左右两边的端点，初始化计算出扫描线的起点和步长
@@ -171,15 +164,9 @@ public:
     // 主渲染函数
     void device_render_trap(trapezoid_t *trap);
     // 根据 render_state 绘制原始三角形
-    void device_draw_primitive(const vertex_t *v1,
-        const vertex_t *v2, const vertex_t *v3);
+    void device_draw_primitive(const vertex_t *v1, const vertex_t *v2, const vertex_t *v3);
 
 };
-
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 // Win32 窗口及图形绘制：为 device 提供一个 DibSection 的 FB
 struct Window {

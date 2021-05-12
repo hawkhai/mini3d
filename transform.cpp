@@ -93,8 +93,7 @@ void vertex_add(vertex_t *y, const vertex_t *x) {
 }
 
 // 根据三角形生成 0-2 个梯形，并且返回合法梯形的数量
-int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1,
-    const vertex_t *p2, const vertex_t *p3) {
+int trapezoid_init_triangle(trapezoid_t *trap, const vertex_t *p1, const vertex_t *p2, const vertex_t *p3) {
     const vertex_t *p;
     float k, x;
 
