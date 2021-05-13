@@ -6,57 +6,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-typedef struct Matrix { float m[4][4]; } matrix_t;
-typedef struct Vector { float x, y, z, w; } vector_t;
-typedef vector_t point_t;
-
-inline int clamp(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
-
-// 计算插值：t 为 [0, 1] 之间的数值
-inline float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
-
-// | v |
-float vector_length(const vector_t *v);
-// z = x + y
-void vector_add(vector_t *z, const vector_t *x, const vector_t *y);
-// z = x - y
-void vector_sub(vector_t *z, const vector_t *x, const vector_t *y);
-// 矢量点乘
-float vector_dotproduct(const vector_t *x, const vector_t *y);
-// 矢量叉乘
-void vector_crossproduct(vector_t *z, const vector_t *x, const vector_t *y);
-// 矢量插值，t取值 [0, 1]
-void vector_interp(vector_t *z, const vector_t *x1, const vector_t *x2, float t);
-// 矢量归一化
-void vector_normalize(vector_t *v);
-
-
-
-// c = a + b
-void matrix_add(matrix_t *c, const matrix_t *a, const matrix_t *b);
-// c = a - b
-void matrix_sub(matrix_t *c, const matrix_t *a, const matrix_t *b);
-// c = a * b
-void matrix_mul(matrix_t *c, const matrix_t *a, const matrix_t *b);
-// c = a * f
-void matrix_scale(matrix_t *c, const matrix_t *a, float f);
-// y = x * m
-void matrix_apply(vector_t *y, const vector_t *x, const matrix_t *m);
-// 单位矩阵
-void matrix_set_identity(matrix_t *m);
-// 0 矩阵
-void matrix_set_zero(matrix_t *m);
-// 平移变换
-void matrix_set_translate(matrix_t *m, float x, float y, float z);
-// 缩放变换
-void matrix_set_scale(matrix_t *m, float x, float y, float z);
-// 旋转矩阵
-void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta);
-// 设置摄像机
-void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, const vector_t *up);
-// D3DXMatrixPerspectiveFovLH
-void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf);
-
+#include "math.h"
 
 // 坐标变换
 typedef struct Transform {
@@ -123,20 +73,7 @@ struct Device {
     int render_state;           // 渲染状态
     UINT32 background;          // 背景颜色
     UINT32 foreground;          // 线框颜色
-
-    static int device_exit;
-    static int device_keys[DEVICE_KEYS_SIZE];	// 当前键盘按下状态
-
-public:
-    Device() {
-        device_exit = 0;
-        memset(device_keys, 0, sizeof(int) * DEVICE_KEYS_SIZE);
-    }
-
-    // win32 event handler
-    static LRESULT win_events(HWND, UINT, WPARAM, LPARAM);
-    void win_dispatch(void);							// 处理消息
-
+    
 public:
     void draw_plane(int a, int b, int c, int d);
     void draw_box(float theta);
@@ -166,30 +103,4 @@ public:
     // 根据 render_state 绘制原始三角形
     void device_draw_primitive(const vertex_t *v1, const vertex_t *v2, const vertex_t *v3);
 
-};
-
-// Win32 窗口及图形绘制：为 device 提供一个 DibSection 的 FB
-struct Window {
-    int screen_w, screen_h;
-    int screen_mx, screen_my, screen_mb;
-    HWND screen_handle;		// 主窗口 HWND
-    HDC screen_dc;			// 配套的 HDC
-    HBITMAP screen_hb;		// DIB
-    HBITMAP screen_ob;		// 老的 BITMAP
-    unsigned char *screen_fb;	// frame buffer
-    long screen_pitch;
-
-    Window() {
-        screen_mx = 0, screen_my = 0, screen_mb = 0;
-        screen_handle = NULL;
-        screen_dc = NULL;
-        screen_hb = NULL;
-        screen_ob = NULL;
-        screen_fb = NULL;
-        screen_pitch = 0;
-    }
-
-    int screen_init(int w, int h, const TCHAR *title, WNDPROC wndproc);	// 屏幕初始化
-    int screen_close(void);								// 关闭屏幕
-    void screen_update(void);							// 显示 FrameBuffer
 };

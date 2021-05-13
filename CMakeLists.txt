@@ -2,12 +2,19 @@ cmake_minimum_required(VERSION 3.15)
 
 project(Mini3D)
 
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+
+add_definitions(-DUNICODE -D_UNICODE)
+
 add_executable(${PROJECT_NAME}
     mini3d.h
+    math.h
     math.cpp
     transform.cpp
     device.cpp
-    screen.cpp
+    window.h
+    window.cpp
     mini3d.cpp
 )
 

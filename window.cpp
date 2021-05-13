@@ -1,8 +1,12 @@
 #include "mini3d.h"
+#include "window.h"
+
+int Window::device_exit;
+int Window::device_keys[DEVICE_KEYS_SIZE];	// 当前键盘按下状态
 
 // 初始化窗口并设置标题
-int Window::screen_init(int w, int h, const TCHAR *title, WNDPROC wndproc) {
-    WNDCLASS wc = { CS_BYTEALIGNCLIENT, wndproc, 0, 0, 0,
+int Window::screen_init(int w, int h, const TCHAR *title) {
+    WNDCLASS wc = { CS_BYTEALIGNCLIENT, (WNDPROC) win_events, 0, 0, 0,
         NULL, NULL, NULL, NULL, _T("SCREEN3.1415926") };
     BITMAPINFO bi = { { sizeof(BITMAPINFOHEADER), w, -h, 1, 32, BI_RGB,
         w * h * 4, 0, 0, 0, 0 } };
@@ -74,4 +78,24 @@ void Window::screen_update(void) {
     HDC hDC = GetDC(screen_handle);
     BitBlt(hDC, 0, 0, screen_w, screen_h, screen_dc, 0, 0, SRCCOPY);
     ReleaseDC(screen_handle, hDC);
+}
+
+LRESULT Window::win_events(HWND hWnd, UINT msg,
+    WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+    case WM_CLOSE: device_exit = 1; break;
+    case WM_KEYDOWN: device_keys[wParam & 511] = 1; break;
+    case WM_KEYUP: device_keys[wParam & 511] = 0; break;
+    default: return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+    return 0;
+}
+
+void Window::win_dispatch(void) {
+    MSG msg;
+    while (1) {
+        if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) break;
+        if (!GetMessage(&msg, NULL, 0, 0)) break;
+        DispatchMessage(&msg);
+    }
 }

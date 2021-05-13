@@ -304,23 +304,3 @@ void Device::init_texture() {
     }
     device_set_texture(texture, 256 * 4, 256, 256);
 }
-
-LRESULT Device::win_events(HWND hWnd, UINT msg,
-    WPARAM wParam, LPARAM lParam) {
-    switch (msg) {
-    case WM_CLOSE: device_exit = 1; break;
-    case WM_KEYDOWN: device_keys[wParam & 511] = 1; break;
-    case WM_KEYUP: device_keys[wParam & 511] = 0; break;
-    default: return DefWindowProc(hWnd, msg, wParam, lParam);
-    }
-    return 0;
-}
-
-void Device::win_dispatch(void) {
-    MSG msg;
-    while (1) {
-        if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) break;
-        if (!GetMessage(&msg, NULL, 0, 0)) break;
-        DispatchMessage(&msg);
-    }
-}
